@@ -42,3 +42,71 @@ Hasil dari proses ini dapat mengoptimalkan 6144 jenis diagnosa menjadi 1754 jeni
 
 ## Extract-Transform-Load
 
+ETL (Extract, Transform, Load) adalah proses yang terdiri dari tiga tahap mengekstraksi data dari berbagai sumber, mentransformasikan data ke dalam format yang sesuai untuk analisis, dan memuatnya ke dalam data warehouse. Proses ETL ini penting untuk memastikan kualitas data dalam data warehouse sehingga mendukung pengambilan keputusan bisnis yang lebih baik.
+### ETL Tabel Asal Daerah
+```python
+import pandas as pd
+import mysql.connector
+df = pd.read_csv('dataetl.csv')
+df = df[['asal_daerah']]
+df_no_duplicates = df.drop_duplicates()
+df_no_duplicates['id_daerah'] = range(1, len(df_no_duplicates) + 1)
+print(df_no_duplicates)
+try:
+    connection = mysql.connector.connect(host='localhost',
+database='db_mnatsir', user='root', password='')
+    if connection.is_connected():
+        cursor = connection.cursor()
+        cursor.execute("USE db_mnatsir”)
+        for index, row in df_no_duplicates.iterrows():
+            cursor.execute("INSERT INTO dim_asal_daerah (id_daerah, asal_daerah) VALUES (%s, %s)", (row['id_daerah'], row['asal_daerah']))
+            connection.commit()
+        print("Data berhasil dimuat ke MySQL")     
+except mysql.connector.Error as e:
+    print("Error:", e)
+finally:
+    if 'connection' in locals():
+        connection.close()
+        print("Koneksi ke MySQL ditutup")
+```
+### ETL Tabel Fakta Rawatan
+```python
+import pandas as pd
+import mysql.connector
+
+data_etl = pd.read_csv("dataetl.csv", usecols=['mr', 'cara_keluar', 'cara_bayar', 'bangsal', 'diagnosa1', 'diagnosa2', 'diagnosa3', 'tanggal'])
+
+try:
+    connection = mysql.connector.connect(host='localhost',
+database='db_mnatsir', user='root', password='')
+    if connection.is_connected():
+        dim_waktu = pd.read_sql("SELECT * FROM dim_waktu", connection)
+        dim_bangsal = pd.read_sql("SELECT * FROM dim_bangsal", connection)
+        dim_cara_bayar = pd.read_sql("SELECT * FROM dim_cara_bayar", connection)
+        dim_cara_keluar = pd.read_sql("SELECT * FROM dim_cara_keluar", connection)
+        dim_diagnosa = pd.read_sql("SELECT * FROM dim_diagnosa", connection)
+
+data_etl = pd.merge(data_etl, dim_waktu, how="left", on="tanggal").drop(columns=['tanggal'])
+        data_etl = pd.merge(data_etl, dim_bangsal, how="left", on="bangsal").drop(columns=['bangsal'])
+        data_etl = pd.merge(data_etl, dim_cara_bayar, how="left", on="cara_bayar").drop(columns=['cara_bayar'])
+        data_etl = pd.merge(data_etl, dim_cara_keluar, how="left", on="cara_keluar").drop(columns=['cara_keluar'])
+        data_etl = pd.merge(data_etl, dim_diagnosa, how="left", left_on="diagnosa1", right_on="diagnosa").drop(columns=['diagnosa1', 'diagnosa']).rename(columns={'id_diagnosa': 'id_diag1'})
+        data_etl = pd.merge(data_etl, dim_diagnosa, how="left", 
+left_on="diagnosa2", right_on="diagnosa").drop(columns=['diagnosa2', 'diagnosa']).rename(columns={'id_diagnosa': 'id_diag2'})
+        data_etl = pd.merge(data_etl, dim_diagnosa, how="left", left_on="diagnosa3", right_on="diagnosa").drop(columns=['diagnosa3', 'diagnosa']).rename(columns={'id_diagnosa': 'id_diag3'})
+        data_etl['id_rawatan'] = data_etl.index + 1
+        data_etl['tanggal'] = pd.to_datetime(data_etl['tanggal']).dt.strftime('%Y-%m-%d')
+        print(data_etl)
+        cursor = connection.cursor()
+        for index, row in data_etl.iterrows():
+            cursor.execute("INSERT INTO fakta_rawatan (id_rawatan,id_waktu,mr,id_bangsal,id_cb,id_ck,id_diag1,id_diag2,id_diag3) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)", 
+                           (row['id_rawatan'], row['id_Waktu'], row['mr'], row['id_bangsal'], row['id_cb'], row['id_ck'], row['id_diag1'], row['id_diag2'], row['id_diag3']))
+            connection.commit()
+        print("Data berhasil dimuat ke MySQL ke tabel fakta_rawatan")
+except mysql.connector.Error as e:
+    print("Error:", e)
+finally:
+    if 'connection' in locals():
+        connection.close()
+        print("Koneksi ke MySQL ditutup")
+```
