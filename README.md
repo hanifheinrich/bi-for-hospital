@@ -29,3 +29,16 @@ kolom_baru = ['Diagnosa' + str(i+1) for i in range(diagnosa_split.shape[1])]
 df.columns = list(df.columns[:-diagnosa_split.shape[1]]) + kolom_baru
 df.to_csv("preprocessing1.csv", index=False)
 ```
+```python
+import pandas as pd
+df = pd.read_csv('preprocessing3.csv', skip_blank_lines=False)
+kata_awal_hapus = pd.read_csv('breakword.csv')
+for kata_awal in kata_awal_hapus:
+    df['Diagnosa'] = df['Diagnosa'].str.replace(fr'({kata_awal}\s).*$', fr'\1', regex=True)
+df.to_csv('preprocessing4.csv', index=False)
+```
+Hasil dari proses ini dapat mengoptimalkan 6144 jenis diagnosa menjadi 1754 jenis diagnosa
+![image](https://github.com/user-attachments/assets/b7994479-e4db-4ac6-ab2f-fe12c2062f55)
+
+## Extract-Transform-Load
+
