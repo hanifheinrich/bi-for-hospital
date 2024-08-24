@@ -14,7 +14,7 @@ Ini adalah tugas akhir saya di Departemen Sistem Informasi Universitas Andalas. 
 - Dashboard
   
 ## Dataset
-Sumber data yang digunakan adalah data rawat inap pasien di RSUD M. Natsir. Data ini terdiri dari 19 Bangsal dari tahun 2020 hingga bulan Agustus 2023. Data tersebut berasal dari bidang rekam medis RSUD M. Natsir yang terdiri dari empat file .xlsx yang dipisah berdasarkan tahun pencatatan. 
+Sumber data yang digunakan adalah data rawat inap pasien di RSUD M. Natsir sebanyak 31197 records. Data ini terdiri dari 19 Bangsal dari tahun 2020 hingga bulan Agustus 2023. Data tersebut berasal dari bidang rekam medis RSUD M. Natsir yang terdiri dari empat file .xlsx yang dipisah berdasarkan tahun pencatatan. 
 
 ## Data Preprocessing
 Data diagnosa banyak yang mengandung simbol seperti +, -, &, dan – untuk merangkap pasien dengan diagnosa yang banyak. Selain itu data pada fields diagnosa banyak yang mengandung keterangan seperti sedang, riwayat, dan memanjang yang merupakan keterangan dari diagnosa pasien. Sedangkan untuk fields Cara Keluar juga banyak yang mengandung keterangan seperti pindah ke ICU atau rujuk ke RSSN. Untuk itu diperlukan data cleaning untuk meningkatkan kualitas analisis.
