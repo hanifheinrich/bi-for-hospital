@@ -110,3 +110,42 @@ finally:
         connection.close()
         print("Koneksi ke MySQL ditutup")
 ```
+## Data Mart Scheme
+![image](https://github.com/user-attachments/assets/8a45e49f-a860-4bac-a100-1d6548a8626f)
+
+## Data Analysis
+Sebelum melakukan forecasting untuk jumlah rawatan, dilakukan analisis data untuk mengetahui  pola, tren, seasoan, dan lainnya dari data ini.
+```python
+import pandas as pd
+import matplotlib.pyplot as plt
+from statsmodels.tsa.seasonal import seasonal_decompose
+file_path = 'analytic/fakta_rawatan.csv'
+data = pd.read_csv(file_path)
+data['tanggal'] = pd.to_datetime(data['tanggal'])
+data.set_index('tanggal', inplace=True)
+rawatan_per_bulan = data.resample('M').size()
+decomposition = seasonal_decompose(rawatan_per_bulan, model='additive')
+plt.figure(figsize=(12, 8))
+plt.subplot(411)
+plt.plot(rawatan_per_bulan, label='Original', color='blue')
+plt.title('Original Time Series')
+plt.legend(loc='upper left')
+plt.subplot(412)
+plt.plot(decomposition.trend, label='Trend', color='orange')
+plt.title('Trend Component')
+plt.legend(loc='upper left')
+plt.subplot(413)
+plt.plot(decomposition.seasonal, label='Seasonality', color='green')
+plt.title('Seasonal Component')
+plt.legend(loc='upper left')
+plt.subplot(414)
+plt.plot(decomposition.resid, label='Residuals', color='red')
+plt.title('Residuals')
+plt.legend(loc='upper left')
+plt.tight_layout()
+plt.show()
+```
+![image](https://github.com/user-attachments/assets/0442d736-d837-4fa6-99ee-921637ad2eab)
+
+
+
