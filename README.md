@@ -147,5 +147,69 @@ plt.show()
 ```
 ![image](https://github.com/user-attachments/assets/0442d736-d837-4fa6-99ee-921637ad2eab)
 
+## Forecasting
+
+Forecasting adalah proses memprediksi kejadian atau tren di masa depan berdasarkan data historis dan analisis statistik. Peramalan ini bertujuan untuk membantu pihak manajerial dalam memperkirakan apakah terjadi kenaikan jumlah rawatan untuk tahun berikutnya. Selain itu, peramalan ini juga dapat membantu dalam membuat kebijakan semisal terjadi lonjakan jumlah rawatan di RSUD M. Natsir dengan tetap mempertahankan kualitas pelayanan. 
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from statsmodels.tsa.arima.model import ARIMA
+from statsmodels.tsa.statespace.sarimax import SARIMAX
+from statsmodels.tsa.holtwinters import ExponentialSmoothing
+from sklearn.metrics import mean_absolute_percentage_error
+
+df = pd.read_csv('Analytic/fakta_rawatan.csv')
+df['tanggal'] = pd.to_datetime(df['tanggal'])
+df['bulan_tahun'] = df['tanggal'].dt.to_period('M')
+data = df.groupby('bulan_tahun').size().reset_index(name='jumlah_rawatan')
+
+train_size = int(len(data) * 0.8)
+data_train = data[:train_size]
+data_test = data[train_size:]
+
+def weighted_moving_average(data, weights):
+    wma = np.convolve(data, weights[::-1], mode='valid') / sum(weights)
+    return wma
+weights = np.arange(1, len(data_train) + 1)
+wma_train = weighted_moving_average(data_train['jumlah_rawatan'], weights)
+last_wma_value = wma_train[-1]
+forecast_wma = np.full(len(data_test), last_wma_value)
+mape_wma = mean_absolute_percentage_error(data_test['jumlah_rawatan'], forecast_wma)
+model_arima = ARIMA(data_train['jumlah_rawatan'], order=(1, 2, 1))
+model_fit_arima = model_arima.fit()
+forecast_arima = model_fit_arima.forecast(len(data_test))
+mape_arima = mean_absolute_percentage_error(data_test['jumlah_rawatan'], forecast_arima)
+model_sarima = SARIMAX(data_train['jumlah_rawatan'], order=(1, 1, 1), seasonal_order=(1, 1, 1, 12))
+model_fit_sarima = model_sarima.fit()
+forecast_sarima = model_fit_sarima.forecast(steps=len(data_test))
+mape_sarima = mean_absolute_percentage_error(data_test['jumlah_rawatan'], forecast_sarima)
+model_tes_seasonal = ExponentialSmoothing(data_train['jumlah_rawatan'], trend='add', seasonal='add', seasonal_periods=7)
+model_fit_tes_seasonal = model_tes_seasonal.fit()
+forecast_tes_seasonal = model_fit_tes_seasonal.forecast(len(data_test))
+mape_tes_seasonal = mean_absolute_percentage_error(data_test['jumlah_rawatan'], forecast_tes_seasonal)
+plt.figure(figsize=(12, 6))
+plt.plot(data_test['bulan_tahun'].astype(str), data_test['jumlah_rawatan'], label='Data Uji', color='black')
+plt.plot(data_test['bulan_tahun'].astype(str), forecast_wma, label='WMA (MAPE: {:.2f}%)'.format(mape_wma * 100), linestyle='--')
+plt.plot(data_test['bulan_tahun'].astype(str), forecast_arima, label='ARIMA (MAPE: {:.2f}%)'.format(mape_arima * 100), linestyle='--')
+plt.plot(data_test['bulan_tahun'].astype(str), forecast_sarima, label='SARIMA (MAPE: {:.2f}%)'.format(mape_sarima * 100), linestyle='--')
+plt.plot(data_test['bulan_tahun'].astype(str), forecast_tes_seasonal, label='TES (MAPE: {:.2f}%)'.format(mape_tes_seasonal * 100), linestyle='--')
+plt.title('Perbandingan Model Peramalan')
+plt.xlabel('Bulan')
+plt.ylabel('Jumlah Rawatan')
+plt.legend()
+plt.grid(True)
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+```
+![image](https://github.com/user-attachments/assets/bcec2d52-5574-41f0-a7b4-6cbebc5e5c46)
+
+### Insight
+- Kasus: Pada akhir 2021 terjadi lonjakan rawatan di bangsal Interne. Untuk itu dibutuhkan perawat tambahan di bangsal tsb.
+- Solusi: Dengan adanya forecasting, pola jumlah rawatan pasien bisa dibaca dan manajerial bisa mempersiapkan sumber daya dan penjadwalan perawatan.
+
+
+
 
 
