@@ -148,7 +148,6 @@ plt.show()
 ![image](https://github.com/user-attachments/assets/0442d736-d837-4fa6-99ee-921637ad2eab)
 
 ## Forecasting
-
 Forecasting adalah proses memprediksi kejadian atau tren di masa depan berdasarkan data historis dan analisis statistik. Peramalan ini bertujuan untuk membantu pihak manajerial dalam memperkirakan apakah terjadi kenaikan jumlah rawatan untuk tahun berikutnya. Selain itu, peramalan ini juga dapat membantu dalam membuat kebijakan semisal terjadi lonjakan jumlah rawatan di RSUD M. Natsir dengan tetap mempertahankan kualitas pelayanan. 
 ```python
 import pandas as pd
@@ -208,6 +207,61 @@ plt.show()
 ### Insight
 - Kasus: Pada akhir 2021 terjadi lonjakan rawatan di bangsal Interne. Untuk itu dibutuhkan perawat tambahan di bangsal tsb.
 - Solusi: Dengan adanya forecasting, pola jumlah rawatan pasien bisa dibaca dan manajerial bisa mempersiapkan sumber daya dan penjadwalan perawatan.
+
+## Clustering
+Clustering adalah teknik analisis data yang mengelompokkan objek-objek yang memiliki karakteristik serupa ke dalam kelompok-kelompok yang berbeda untuk menemukan pola atau struktur dalam data.
+```python
+import pandas as pd
+from sklearn.cluster import KMeans
+import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
+import numpy as np
+from sklearn.metrics import davies_bouldin_score
+
+df = pd.read_csv('Analytic/dataset_cluster.csv')  
+X = df[['id_bangsal', 'range_umur']]
+kmeans = KMeans(n_clusters=3, random_state=42)
+df['cluster'] = kmeans.fit_predict(X)
+dbi_score = davies_bouldin_score(X, df['cluster'])
+
+df.to_csv('cluster_umur_bangsal.csv', index=False)  
+plt.figure(figsize=(10, 6))
+plt.scatter(df['id_bangsal'], df['range_umur'], c=df['cluster'], cmap='viridis', marker='o')
+plt.xlabel('Bangsal')
+plt.ylabel('Range Umur')
+plt.title('K-Means Clustering (DBI: {:.2f})'.format(dbi_score))
+plt.colorbar(label='Cluster')
+
+plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
+plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
+
+for cluster in range(3):
+    cluster_points = df[df['cluster'] == cluster][['id_bangsal', 'range_umur']]
+    center = cluster_points.mean()
+    radius = np.max(np.sqrt(np.sum((cluster_points - center) ** 2, axis=1)))
+    circle = plt.Circle((center['id_bangsal'], center['range_umur']), radius, color='black', fill=False, linestyle='--')
+    plt.gca().add_artist(circle)
+
+plt.grid(True)
+plt.show()
+```
+![image](https://github.com/user-attachments/assets/9815d447-005b-40fd-8982-e085e3fa5417)
+### Insight
+-	Persiapan infrastruktur pegangan besi untuk cluster lansia, penyetokan kursi bayi pada cluster balita
+-	Penyusunan ulang denah bangsal rumah sakit berdasarkan cluster.
+
+## Alert Notification
+![image](https://github.com/user-attachments/assets/e6257f61-64ae-4023-85bf-99ea006bfd00)
+
+## Dashboard
+![image](https://github.com/user-attachments/assets/140c989a-04b8-4393-b3c8-21762269d350)
+![image](https://github.com/user-attachments/assets/8f9b575a-9846-481a-a852-db34a84fd214)
+![image](https://github.com/user-attachments/assets/a8ac9e8b-de30-459b-8c1c-c8724edd7e45)
+
+
+
+
+
 
 
 
